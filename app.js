@@ -481,6 +481,69 @@ function wasRecentMatch(aId, bId, currentShow) {
   });
 }
 
+function wasLastWeeklyMatch(aId, bId, currentShow) {
+  return state.matches.some((m) => {
+    const samePair =
+      (m.luchadorA === aId && m.luchadorB === bId) ||
+      (m.luchadorA === bId && m.luchadorB === aId);
+    return samePair && !m.titular && m.numeroShow === currentShow - 1;
+  });
+}
+
+function generateWeeklyCard(brand) {
+  const fights = [];
+  const usedThisShow = new Set();
+
+  DIVISIONS[brand].forEach((division) => {
+    const ranking = getSortedRanking(brand, division).slice(0, 10);
+
+    const available = ranking.filter((w) => !usedThisShow.has(w.id));
+    if (available.length < 2) return;
+
+    let selectedFight = null;
+
+    for (const a of available) {
+      const aPos = ranking.findIndex((w) => w.id === a.id);
+
+      const preferredRival = available.find((b) => {
+        if (b.id === a.id) return false;
+        const bPos = ranking.findIndex((w) => w.id === b.id);
+        const withinRange = Math.abs(aPos - bPos) <= 3;
+        return withinRange && !wasLastWeeklyMatch(a.id, b.id, state.showNumber);
+      });
+
+      if (preferredRival) {
+        selectedFight = { a, b: preferredRival };
+        break;
+      }
+    }
+
+    if (!selectedFight) {
+      for (const a of available) {
+        const aPos = ranking.findIndex((w) => w.id === a.id);
+        const fallbackRival = available.find((b) => {
+          if (b.id === a.id) return false;
+          const bPos = ranking.findIndex((w) => w.id === b.id);
+          return Math.abs(aPos - bPos) <= 3;
+        });
+
+        if (fallbackRival) {
+          selectedFight = { a, b: fallbackRival };
+          break;
+        }
+      }
+    }
+
+    if (!selectedFight) return;
+
+    usedThisShow.add(selectedFight.a.id);
+    usedThisShow.add(selectedFight.b.id);
+    fights.push({
+      brand,
+      division,
+      a: selectedFight.a.nombre,
+      b: selectedFight.b.nombre,
+    });
 function generateWeeklyCard(brand) {
   const fights = [];
 
