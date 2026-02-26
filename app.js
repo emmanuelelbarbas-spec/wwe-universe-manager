@@ -527,6 +527,8 @@ function generateWeeklyCard(brand) {
   const orderedDivisions = WEEKLY_ORDER[brand] || DIVISIONS[brand] || [];
 
   orderedDivisions.forEach((division) => {
+
+  DIVISIONS[brand].forEach((division) => {
     const ranking = getSortedRanking(brand, division).slice(0, 10);
 
     const available = ranking.filter((w) => !usedThisShow.has(w.id));
@@ -576,6 +578,32 @@ function generateWeeklyCard(brand) {
       a: selectedFight.a.nombre,
       b: selectedFight.b.nombre,
     });
+function generateWeeklyCard(brand) {
+  const fights = [];
+
+  DIVISIONS[brand].forEach((division) => {
+    const ranking = getSortedRanking(brand, division).slice(0, 10);
+    const pool = [...ranking];
+
+    while (pool.length > 1) {
+      const a = pool.shift();
+      const aPos = ranking.findIndex((w) => w.id === a.id);
+      let candidateIndex = pool.findIndex((b) => {
+        const bPos = ranking.findIndex((w) => w.id === b.id);
+        return Math.abs(aPos - bPos) <= 3 && !wasRecentMatch(a.id, b.id, state.showNumber);
+      });
+
+      if (candidateIndex === -1) {
+        candidateIndex = pool.findIndex((b) => {
+          const bPos = ranking.findIndex((w) => w.id === b.id);
+          return Math.abs(aPos - bPos) <= 3;
+        });
+      }
+
+      if (candidateIndex === -1) continue;
+      const [b] = pool.splice(candidateIndex, 1);
+      fights.push({ brand, division, a: a.nombre, b: b.nombre });
+    }
   });
 
   return fights;
@@ -594,10 +622,28 @@ function generatePPV() {
         challenger: challenger.nombre,
       });
     }
+
+function generatePPV() {
+  const fights = [];
+
+  Object.entries(DIVISIONS).forEach(([brand, divisions]) => {
+    divisions.forEach((division) => {
+      const champion = getChampion(brand, division);
+      const challenger = getSortedRanking(brand, division)[0];
+      if (champion && challenger) {
+        fights.push({
+          brand,
+          division,
+          champion: champion.nombre,
+          challenger: challenger.nombre,
+        });
+      }
+    });
   });
 
   return fights;
 }
+
 function renderCarteleras() {
   const panel = document.getElementById("panel-carteleras");
   panel.innerHTML = `
