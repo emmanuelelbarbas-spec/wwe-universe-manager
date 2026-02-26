@@ -29,6 +29,37 @@ const DIVISIONS = {
   ],
 };
 
+
+const WEEKLY_ORDER = {
+  RAW: [
+    "World Womens",
+    "World Tag Team",
+    "Intercontinental",
+    "World Heavyweight",
+    "Womens Intercontinental",
+  ],
+  SMACKDOWN: [
+    "WWE Womens",
+    "WWE Tag Team",
+    "United States",
+    "Undisputed",
+    "Womens United States",
+  ],
+};
+
+const PPV_ORDER = [
+  { brand: "RAW", division: "World Womens" },
+  { brand: "SMACKDOWN", division: "WWE Womens" },
+  { brand: "RAW", division: "World Tag Team" },
+  { brand: "SMACKDOWN", division: "WWE Tag Team" },
+  { brand: "RAW", division: "Intercontinental" },
+  { brand: "SMACKDOWN", division: "United States" },
+  { brand: "RAW", division: "Womens Intercontinental" },
+  { brand: "SMACKDOWN", division: "Womens United States" },
+  { brand: "RAW", division: "World Heavyweight" },
+  { brand: "SMACKDOWN", division: "Undisputed" },
+];
+
 const state = loadState();
 init();
 
@@ -493,6 +524,9 @@ function wasLastWeeklyMatch(aId, bId, currentShow) {
 function generateWeeklyCard(brand) {
   const fights = [];
   const usedThisShow = new Set();
+  const orderedDivisions = WEEKLY_ORDER[brand] || DIVISIONS[brand] || [];
+
+  orderedDivisions.forEach((division) => {
 
   DIVISIONS[brand].forEach((division) => {
     const ranking = getSortedRanking(brand, division).slice(0, 10);
@@ -574,6 +608,20 @@ function generateWeeklyCard(brand) {
 
   return fights;
 }
+function generatePPV() {
+  const fights = [];
+
+  PPV_ORDER.forEach(({ brand, division }) => {
+    const champion = getChampion(brand, division);
+    const challenger = getSortedRanking(brand, division)[0];
+    if (champion && challenger) {
+      fights.push({
+        brand,
+        division,
+        champion: champion.nombre,
+        challenger: challenger.nombre,
+      });
+    }
 
 function generatePPV() {
   const fights = [];
